@@ -47,3 +47,154 @@ The cluster control plane started successfully using the Hyper-V driver and is r
 ## Screenshoot
 <img width="986" height="956" alt="Screenshot_1" src="https://github.com/user-attachments/assets/80b1b957-60b4-47b0-81b8-55efc6ace41b" />
 
+# Part 3: Multi-Resource Deployment
+
+## Objective
+
+Deploy an Nginx application in Kubernetes using a Deployment and expose it using a NodePort Service.
+
+---
+
+## Deployment Manifest
+
+Created a Deployment with 2 replicas using Nginx.
+
+### deployment.yaml
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-app
+  template:
+    metadata:
+      labels:
+        app: nginx-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+```
+
+---
+
+## Service Manifest
+
+Created a NodePort Service to expose the application externally.
+
+### service.yaml
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: NodePort
+  selector:
+    app: nginx-app
+  ports:
+  - port: 80
+    targetPort: 80
+```
+
+---
+
+## Apply Resources
+
+```bash
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+```
+
+Output:
+
+```text
+deployment.apps/nginx-deployment created
+service/nginx-service created
+```
+
+---
+
+## Verification
+
+### Check Pods
+
+```bash
+kubectl get pods
+```
+
+Output:
+
+```text
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-667f7bdcb9-8q64d   1/1     Running   0
+nginx-deployment-667f7bdcb9-nfcjt   1/1     Running   0
+```
+
+### Check Deployment
+
+```bash
+kubectl get deployments
+```
+
+Output:
+
+```text
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   2/2     2            2
+```
+
+### Check Service
+
+```bash
+kubectl get services
+```
+
+Output:
+
+```text
+NAME            TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)
+nginx-service   NodePort    10.109.46.22   <none>        80:31732/TCP
+```
+
+---
+
+## Access the Application
+
+Generate the service URL:
+
+```bash
+minikube service nginx-service --url
+```
+
+Open the generated URL in a web browser.
+
+### Result
+
+The default **Nginx Welcome Page** was displayed successfully.
+
+---
+
+## Observation
+
+The Deployment successfully created and maintained two Nginx Pods as specified in the replica configuration.
+
+The NodePort Service exposed the application and routed incoming traffic to the running Pods.
+
+Accessing the service URL in the browser displayed the default Nginx welcome page, confirming that the application was deployed and running successfully.
+
+## Screenshoot:
+1. <img width="1002" height="883" alt="Screenshot_2" src="https://github.com/user-attachments/assets/d79b0e8b-f003-450c-bb41-a86ac0ccf0cc" />
+2. <img width="1385" height="781" alt="Screenshot_3" src="https://github.com/user-attachments/assets/8f1ac97a-7b2f-4be8-b6a9-b5931ca4c432" />
+
+
