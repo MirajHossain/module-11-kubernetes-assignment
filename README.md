@@ -386,38 +386,121 @@ Verification using `kubectl exec` confirmed that the application received the ex
 
 # Part 5: Scaling & Rolling Updates
 
+## Objective
+
+Scale the Nginx Deployment and perform a rolling update followed by a rollback.
+
+---
+
 ## Scaling the Deployment
 
-The Nginx Deployment was scaled from 2 replicas to 4 replicas.
+The Deployment was scaled from 2 replicas to 4 replicas.
+
+### Command
 
 ```bash
 kubectl scale deployment nginx-deployment --replicas=4
 ```
 
-Verification:
+### Output
+
+```text
+deployment.apps/nginx-deployment scaled
+```
+
+### Verification
 
 ```bash
 kubectl get deployment nginx-deployment
 ```
 
-Output:
+Example Output:
 
 ```text
-NAME               READY   UP-TO-DATE   AVAILABLE
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-deployment   4/4     4            4
+```
+
+```bash
+kubectl get pods
+```
+
+Example Output:
+
+```text
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-xxxxx              1/1     Running   0
+nginx-deployment-xxxxx              1/1     Running   0
+nginx-deployment-xxxxx              1/1     Running   0
+nginx-deployment-xxxxx              1/1     Running   0
 ```
 
 ---
 
 ## Rolling Update
 
-A rolling update was performed by changing the container image version.
+A rolling update was performed by changing the Nginx image version.
+
+### Command
 
 ```bash
 kubectl set image deployment/nginx-deployment nginx=nginx:1.27
 ```
 
-Check rollout status:
+### Output
+
+```text
+deployment.apps/nginx-deployment image updated
+```
+
+### Verify Rollout Status
+
+```bash
+kubectl rollout status deployment/nginx-deployment
+```
+
+Output:
+
+```text
+deployment "nginx-deployment" successfully rolled out
+```
+
+### Rollout History
+
+```bash
+kubectl rollout history deployment/nginx-deployment
+```
+
+Output:
+
+```text
+deployment.apps/nginx-deployment
+
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+3         <none>
+```
+
+---
+
+## Rollback
+
+The deployment was rolled back to the previous version.
+
+### Command
+
+```bash
+kubectl rollout undo deployment/nginx-deployment
+```
+
+### Output
+
+```text
+deployment.apps/nginx-deployment rolled back
+```
+
+### Verify Rollback
 
 ```bash
 kubectl rollout status deployment/nginx-deployment
@@ -431,29 +514,30 @@ deployment "nginx-deployment" successfully rolled out
 
 ---
 
-## Rollback
-
-The deployment was rolled back to the previous version.
-
-```bash
-kubectl rollout undo deployment/nginx-deployment
-```
-
-Verify rollback:
-
-```bash
-kubectl rollout status deployment/nginx-deployment
-```
-
----
-
 ## Observation
 
-The deployment was successfully scaled from 2 replicas to 4 replicas, and Kubernetes created additional Pods automatically.
+The Deployment was successfully scaled from 2 replicas to 4 replicas, and Kubernetes automatically created additional Pods to maintain the desired state.
 
-During the rolling update, Kubernetes replaced old Pods with new ones gradually without causing downtime.
+A rolling update was performed by updating the Nginx image version. Kubernetes gradually replaced the old Pods with new ones while keeping the application available during the update process.
 
-When the rollback command was executed, Kubernetes restored the previous stable version of the deployment, demonstrating its built-in recovery capability.
+The rollback operation restored the previous stable version of the Deployment. This demonstrates Kubernetes' ability to perform safe updates and quickly recover from configuration changes when needed.
+
+## Screenshoot:
+1. <img width="924" height="257" alt="Screenshot_7" src="https://github.com/user-attachments/assets/0f85d8a9-f998-4bfb-9691-336cb4dbd0c3" />
+2. <img width="928" height="100" alt="Screenshot_8" src="https://github.com/user-attachments/assets/250f3e57-4912-4bed-919d-cc2f3b5d242b" />
+3. <img width="914" height="171" alt="Screenshot_9" src="https://github.com/user-attachments/assets/438083a2-7478-466c-acb1-533509705d40" />
+4. <img width="909" height="118" alt="Screenshot_10" src="https://github.com/user-attachments/assets/637cd6d3-c56d-4200-bd68-aeccd4fae8c6" />
+5. <img width="915" height="79" alt="Screenshot_11" src="https://github.com/user-attachments/assets/7d241f9c-df02-4ec0-a3d2-00d342ffbf0a" />
+6. <img width="907" height="166" alt="Screenshot_12" src="https://github.com/user-attachments/assets/55e54096-bdf2-4a9e-9dc8-86f29511b835" />
+7. <img width="1027" height="188" alt="Screenshot_13" src="https://github.com/user-attachments/assets/a23eff73-ccf9-4f2d-9a26-c0699b1f7f76" />
+8. <img width="897" height="78" alt="Screenshot_14" src="https://github.com/user-attachments/assets/560c9d00-5f7f-4917-87b0-e38a32b61606" /> 
+
+
+
+
+
+
+
 
 
 
