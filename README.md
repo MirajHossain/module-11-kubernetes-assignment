@@ -1,4 +1,5 @@
-# module-11-kubernetes-assignment
+## module-11-kubernetes-assignment
+# Part 1: Conceptual Understanding
 1. How does Kubernetes ensure high availability compared to traditional deployment?
 Kubernetes maintains the desired number of application instances using ReplicaSets and automatically restarts failed containers.
 It distributes workloads across nodes and can reschedule Pods if a node fails.
