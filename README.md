@@ -197,4 +197,265 @@ Accessing the service URL in the browser displayed the default Nginx welcome pag
 1. <img width="1002" height="883" alt="Screenshot_2" src="https://github.com/user-attachments/assets/d79b0e8b-f003-450c-bb41-a86ac0ccf0cc" />
 2. <img width="1385" height="781" alt="Screenshot_3" src="https://github.com/user-attachments/assets/8f1ac97a-7b2f-4be8-b6a9-b5931ca4c432" />
 
+# Part 4: Configuration & Secrets
+
+## Objective
+
+Enhance the Nginx deployment by using a ConfigMap for application configuration and a Secret for storing credentials.
+
+---
+
+## Create ConfigMap
+
+### configmap.yaml
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  APP_MODE: dev
+```
+
+Apply the ConfigMap:
+
+```bash
+kubectl apply -f configmap.yaml
+```
+
+Verify:
+
+```bash
+kubectl get configmap
+```
+
+Example Output:
+
+```text
+NAME         DATA   AGE
+app-config   1      1m
+```
+
+---
+
+## Create Secret
+
+### secret.yaml
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+type: Opaque
+stringData:
+  USERNAME: admin
+  PASSWORD: admin123
+```
+
+Apply the Secret:
+
+```bash
+kubectl apply -f secret.yaml
+```
+
+Verify:
+
+```bash
+kubectl get secrets
+```
+
+Example Output:
+
+```text
+NAME          TYPE     DATA   AGE
+app-secret    Opaque   2      1m
+```
+
+---
+
+## Update Deployment
+
+The existing Nginx Deployment was updated to consume values from the ConfigMap and Secret as environment variables.
+
+### Environment Variable Configuration
+
+```yaml
+env:
+- name: APP_MODE
+  valueFrom:
+    configMapKeyRef:
+      name: app-config
+      key: APP_MODE
+
+- name: USERNAME
+  valueFrom:
+    secretKeyRef:
+      name: app-secret
+      key: USERNAME
+
+- name: PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: app-secret
+      key: PASSWORD
+```
+
+Apply the updated deployment:
+
+```bash
+kubectl apply -f deployment.yaml
+```
+
+Output:
+
+```text
+deployment.apps/nginx-deployment unchanged
+```
+
+---
+
+## Verify Environment Variables Inside Container
+
+List running Pods:
+
+```bash
+kubectl get pods
+```
+
+Example Output:
+
+```text
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-5c4ff99745-29rhh   1/1     Running   0          66s
+nginx-deployment-5c4ff99745-hl4tz   1/1     Running   0          63s
+```
+
+Verify ConfigMap value:
+
+```bash
+kubectl exec -it nginx-deployment-5c4ff99745-29rhh -- printenv APP_MODE
+```
+
+Output:
+
+```text
+dev
+```
+
+Verify Secret username:
+
+```bash
+kubectl exec -it nginx-deployment-5c4ff99745-29rhh -- printenv USERNAME
+```
+
+Output:
+
+```text
+admin
+```
+
+Verify Secret password:
+
+```bash
+kubectl exec -it nginx-deployment-5c4ff99745-29rhh -- printenv PASSWORD
+```
+
+Output:
+
+```text
+admin123
+```
+
+---
+
+## Observation
+
+A ConfigMap named `app-config` was used to store non-sensitive application settings, while a Secret named `app-secret` was used to store credentials securely.
+
+The Deployment successfully injected both ConfigMap and Secret values into the container as environment variables.
+
+Verification using `kubectl exec` confirmed that the application received the expected values (`APP_MODE=dev`, `USERNAME=admin`, and `PASSWORD=admin123`).
+
+## Screenshoot:
+1. <img width="883" height="140" alt="Screenshot_4" src="https://github.com/user-attachments/assets/03d66c0c-0343-4b22-b9d1-9a10c25f3c61" />
+2. <img width="900" height="117" alt="Screenshot_5" src="https://github.com/user-attachments/assets/f1493d78-1f1f-4afe-9f65-6a03c63fdc8b" />
+3. <img width="886" height="82" alt="Screenshot_6" src="https://github.com/user-attachments/assets/2baedcbc-465a-474e-88aa-a397ec027d1e" />
+4. <img width="924" height="257" alt="Screenshot_7" src="https://github.com/user-attachments/assets/a5b43f81-238e-4956-bc46-2002b9838d9e" />
+
+# Part 5: Scaling & Rolling Updates
+
+## Scaling the Deployment
+
+The Nginx Deployment was scaled from 2 replicas to 4 replicas.
+
+```bash
+kubectl scale deployment nginx-deployment --replicas=4
+```
+
+Verification:
+
+```bash
+kubectl get deployment nginx-deployment
+```
+
+Output:
+
+```text
+NAME               READY   UP-TO-DATE   AVAILABLE
+nginx-deployment   4/4     4            4
+```
+
+---
+
+## Rolling Update
+
+A rolling update was performed by changing the container image version.
+
+```bash
+kubectl set image deployment/nginx-deployment nginx=nginx:1.27
+```
+
+Check rollout status:
+
+```bash
+kubectl rollout status deployment/nginx-deployment
+```
+
+Output:
+
+```text
+deployment "nginx-deployment" successfully rolled out
+```
+
+---
+
+## Rollback
+
+The deployment was rolled back to the previous version.
+
+```bash
+kubectl rollout undo deployment/nginx-deployment
+```
+
+Verify rollback:
+
+```bash
+kubectl rollout status deployment/nginx-deployment
+```
+
+---
+
+## Observation
+
+The deployment was successfully scaled from 2 replicas to 4 replicas, and Kubernetes created additional Pods automatically.
+
+During the rolling update, Kubernetes replaced old Pods with new ones gradually without causing downtime.
+
+When the rollback command was executed, Kubernetes restored the previous stable version of the deployment, demonstrating its built-in recovery capability.
+
+
+
+
 
