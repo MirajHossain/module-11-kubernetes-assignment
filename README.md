@@ -530,7 +530,149 @@ The rollback operation restored the previous stable version of the Deployment. T
 5. <img width="915" height="79" alt="Screenshot_11" src="https://github.com/user-attachments/assets/7d241f9c-df02-4ec0-a3d2-00d342ffbf0a" />
 6. <img width="907" height="166" alt="Screenshot_12" src="https://github.com/user-attachments/assets/55e54096-bdf2-4a9e-9dc8-86f29511b835" />
 7. <img width="1027" height="188" alt="Screenshot_13" src="https://github.com/user-attachments/assets/a23eff73-ccf9-4f2d-9a26-c0699b1f7f76" />
-8. <img width="897" height="78" alt="Screenshot_14" src="https://github.com/user-attachments/assets/560c9d00-5f7f-4917-87b0-e38a32b61606" /> 
+8. <img width="897" height="78" alt="Screenshot_14" src="https://github.com/user-attachments/assets/560c9d00-5f7f-4917-87b0-e38a32b61606" />
+
+# Part 6: Basic Troubleshooting
+
+## Objective
+
+Identify and resolve a deployment issue by intentionally using an invalid container image and troubleshooting the resulting Pod failure.
+
+---
+
+## Introduce an Error
+
+The Deployment was intentionally updated with an invalid image version.
+
+### Command
+
+```bash
+kubectl set image deployment/nginx-deployment nginx=nginx:wrong-version
+```
+
+### Output
+
+```text
+deployment.apps/nginx-deployment image updated
+```
+
+---
+
+## Observe Pod Status
+
+Check the status of the Pods:
+
+```bash
+kubectl get pods
+```
+
+Example Output:
+
+```text
+NAME                               READY   STATUS             RESTARTS
+nginx-deployment-8d8cb8c74-fpc84   0/1     ImagePullBackOff   0
+```
+
+The Pod entered the `ImagePullBackOff` state because Kubernetes could not pull the specified container image.
+
+---
+
+## Troubleshooting Using Describe
+
+### Command
+
+```bash
+kubectl describe pod nginx-deployment-8d8cb8c74-fpc84
+```
+
+### Relevant Output
+
+```text
+Failed to pull image "nginx:wrong-version"
+Error: ErrImagePull
+Back-off pulling image
+```
+
+This confirmed that the image tag was invalid and Kubernetes could not download the container image.
+
+---
+
+## Troubleshooting Using Logs
+
+### Command
+
+```bash
+kubectl logs nginx-deployment-8d8cb8c74-fpc84
+```
+
+### Output
+
+```text
+Error from server (BadRequest): container "nginx" in pod "nginx-deployment-8d8cb8c74-fpc84" is waiting to start: trying and failing to pull image
+```
+
+The logs indicated that the container could not start because Kubernetes was unable to pull the specified image.
+
+---
+
+## Fix the Issue
+
+The Deployment image was updated to a valid version.
+
+### Command
+
+```bash
+kubectl set image deployment/nginx-deployment nginx=nginx:latest
+```
+
+### Output
+
+```text
+deployment.apps/nginx-deployment image updated
+```
+
+---
+
+## Verify Recovery
+
+Check rollout status:
+
+```bash
+kubectl rollout status deployment/nginx-deployment
+```
+
+Expected Output:
+
+```text
+deployment "nginx-deployment" successfully rolled out
+```
+
+Verify Pods:
+
+```bash
+kubectl get pods
+```
+
+Output:
+
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-xxxxx              1/1     Running   0
+nginx-deployment-xxxxx              1/1     Running   0
+
+## Screenshoots:
+1. <img width="935" height="290" alt="Screenshot_15" src="https://github.com/user-attachments/assets/ff236202-1e62-4449-b42f-fe35415812c7" />
+2. <img width="1031" height="819" alt="Screenshot_16" src="https://github.com/user-attachments/assets/02a90229-1d2d-4c8d-b1de-cb0cf9f3a6e8" />
+3. <img width="1022" height="123" alt="Screenshot_17" src="https://github.com/user-attachments/assets/8adc4bfe-0dc9-4e74-8f67-efa95fb1f334" />
+4. <img width="1012" height="331" alt="Screenshot_18" src="https://github.com/user-attachments/assets/36218e59-ecf4-44d3-8b8e-557784ad0f1d" />
+5. <img width="964" height="356" alt="Screenshot_19" src="https://github.com/user-attachments/assets/2d410e79-bdf9-41f6-bfaf-5f09593973a7" />
+
+
+
+
+
+
+
+
 
 
 
