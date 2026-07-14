@@ -666,6 +666,182 @@ nginx-deployment-xxxxx              1/1     Running   0
 4. <img width="1012" height="331" alt="Screenshot_18" src="https://github.com/user-attachments/assets/36218e59-ecf4-44d3-8b8e-557784ad0f1d" />
 5. <img width="964" height="356" alt="Screenshot_19" src="https://github.com/user-attachments/assets/2d410e79-bdf9-41f6-bfaf-5f09593973a7" />
 
+# Part 7: Namespaces (Isolation)
+
+## Objective
+
+Create a separate namespace and deploy the application inside it to demonstrate resource isolation in Kubernetes.
+
+---
+
+## Create Namespace
+
+A new namespace named `dev-env` was created.
+
+### Command
+
+```bash
+kubectl create namespace dev-env
+```
+
+### Verify Namespace
+
+```bash
+kubectl get namespaces
+```
+
+Example Output:
+
+```text
+NAME              STATUS   AGE
+default           Active
+dev-env           Active
+kube-system       Active
+```
+
+---
+
+## Deploy Application in the Namespace
+
+The Nginx Deployment and Service were deployed into the `dev-env` namespace.
+
+### Commands
+
+```bash
+kubectl apply -f deployment.yaml -n dev-env
+kubectl apply -f service.yaml -n dev-env
+```
+
+### Output
+
+```text
+deployment.apps/nginx-deployment created
+service/nginx-service created
+```
+
+---
+
+## Initial Verification
+
+Check Pods inside the namespace:
+
+```bash
+kubectl get pods -n dev-env
+```
+
+Output:
+
+```text
+NAME                                READY   STATUS                       RESTARTS   AGE
+nginx-deployment-5c4ff99745-5dgcr   0/1     CreateContainerConfigError   0          59s
+nginx-deployment-5c4ff99745-8cwjk   0/1     CreateContainerConfigError   0          59s
+```
+
+---
+
+## Troubleshooting
+
+To identify the issue, the pod details were inspected.
+
+### Command
+
+```bash
+kubectl describe pod nginx-deployment-5c4ff99745-5dgcr -n dev-env
+```
+
+### Error Found
+
+```text
+Error: configmap "app-config" not found
+```
+
+The Deployment required a ConfigMap (`app-config`) and Secret (`app-secret`), but they were not available in the `dev-env` namespace.
+
+---
+
+## Fix the Issue
+
+Create the ConfigMap and Secret in the same namespace.
+
+### Commands
+
+```bash
+kubectl apply -f configmap.yaml -n dev-env
+kubectl apply -f secret.yaml -n dev-env
+```
+
+Verify:
+
+```bash
+kubectl get configmap -n dev-env
+kubectl get secrets -n dev-env
+```
+
+Restart the Deployment if necessary:
+
+```bash
+kubectl rollout restart deployment nginx-deployment -n dev-env
+```
+
+---
+
+## Verify Successful Deployment
+
+```bash
+kubectl get pods -n dev-env
+```
+
+Example Output:
+
+```text
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-xxxxx              1/1     Running   0
+nginx-deployment-xxxxx              1/1     Running   0
+```
+
+Check all resources:
+
+```bash
+kubectl get all -n dev-env
+```
+
+---
+
+## Verify Namespace Isolation
+
+Resources in the default namespace:
+
+```bash
+kubectl get all
+```
+
+Resources in the `dev-env` namespace:
+
+```bash
+kubectl get all -n dev-env
+```
+
+The outputs show that Kubernetes maintains separate resources for each namespace.
+
+---
+
+## Observation
+
+A new namespace named `dev-env` was successfully created and used to deploy the application.
+
+Initially, the Pods failed with the `CreateContainerConfigError` status because the required ConfigMap (`app-config`) and Secret (`app-secret`) did not exist in the `dev-env` namespace.
+
+After creating the ConfigMap and Secret within the same namespace, the Pods started successfully and reached the `Running` state.
+
+This demonstrates that Kubernetes resources such as ConfigMaps and Secrets are namespace-scoped and must be created in the same namespace where the application is deployed. It also confirms that namespaces provide logical isolation between resources, allowing different environments to coexist within the same cluster.
+
+## Screenshoots:
+1. <img width="914" height="286" alt="Screenshot_20" src="https://github.com/user-attachments/assets/a0e431b6-e658-4815-b993-30bfa8ffa380" />
+2. <img width="921" height="177" alt="Screenshot_21" src="https://github.com/user-attachments/assets/0c971b62-f838-40ef-bc33-80be6ec7a1e6" />
+3. <img width="946" height="135" alt="Screenshot_22" src="https://github.com/user-attachments/assets/5c360592-9661-4f5a-bee8-d08d28a9aea7" />
+
+
+
 
 
 
